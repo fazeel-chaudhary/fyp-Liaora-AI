@@ -1,0 +1,276 @@
+{
+  "database_seed": {
+    "users": [
+      {
+        "id": "sample-user-1",
+        "email": "user1@example.com",
+        "name": "John Doe",
+        "created_at": "2023-10-01T10:00:00.000Z"
+      },
+      {
+        "id": "sample-user-2",
+        "email": "user2@example.com",
+        "name": "Jane Smith",
+        "created_at": "2023-10-02T11:00:00.000Z"
+      },
+      {
+        "id": "sample-user-3",
+        "email": "user3@example.com",
+        "name": "Bob Johnson",
+        "created_at": "2023-10-03T12:00:00.000Z"
+      }
+    ],
+    "messages": [
+      {
+        "user_id": "sample-user-1",
+        "sender": "sample-user-1",
+        "content": "Hello, how are you?",
+        "timestamp": "2023-10-01T10:05:00.000Z"
+      },
+      {
+        "user_id": "sample-user-1",
+        "sender": "Aura",
+        "content": "I'm doing well, thank you! How can I help you today?",
+        "timestamp": "2023-10-01T10:05:05.000Z"
+      },
+      {
+        "user_id": "sample-user-1",
+        "sender": "sample-user-1",
+        "content": "Can you tell me about yourself?",
+        "timestamp": "2023-10-01T10:05:10.000Z"
+      },
+      {
+        "user_id": "sample-user-1",
+        "sender": "Aura",
+        "content": "I'm Aura, an AI assistant designed to be helpful and friendly. I can answer questions, provide information, and assist with various tasks.",
+        "timestamp": "2023-10-01T10:05:15.000Z"
+      },
+      {
+        "user_id": "sample-user-2",
+        "sender": "sample-user-2",
+        "content": "What's the weather like?",
+        "timestamp": "2023-10-02T11:05:00.000Z"
+      },
+      {
+        "user_id": "sample-user-2",
+        "sender": "Blaze",
+        "content": "I don't have real-time weather data, but I can suggest checking a weather app or website for the most current information.",
+        "timestamp": "2023-10-02T11:05:05.000Z"
+      },
+      {
+        "user_id": "sample-user-3",
+        "sender": "sample-user-3",
+        "content": "Tell me a joke.",
+        "timestamp": "2023-10-03T12:05:00.000Z"
+      },
+      {
+        "user_id": "sample-user-3",
+        "sender": "Zippy",
+        "content": "Why don't scientists trust atoms? Because they make up everything!",
+        "timestamp": "2023-10-03T12:05:05.000Z"
+      }
+    ]
+  },
+  "endpoints": {
+    "auth_signup": {
+      "method": "POST",
+      "path": "/auth/signup",
+      "description": "Create a new user account",
+      "request_body": {
+        "username": "TestUser",
+        "email": "test@example.com",
+        "password": "password123"
+      },
+      "expected_response": {
+        "status_code": 200,
+        "body": {
+          "message": "Signup successful, please check your email for verification link",
+          "user_id": "new-user-id"
+        }
+      },
+      "notes": "Email confirmation may be required depending on Supabase configuration"
+    },
+    "auth_login": {
+      "method": "POST",
+      "path": "/auth/login",
+      "description": "Authenticate user and get access token",
+      "request_body": {
+        "email": "user1@example.com",
+        "password": "password123"
+      },
+      "expected_response": {
+        "status_code": 200,
+        "body": {
+          "message": "Login successful",
+          "user_id": "sample-user-1",
+          "access_token": "sample-jwt-token-here"
+        }
+      }
+    },
+    "auth_logout": {
+      "method": "POST",
+      "path": "/auth/logout",
+      "description": "Logout user from current session",
+      "request_body": null,
+      "expected_response": {
+        "status_code": 200,
+        "body": {
+          "message": "Logout successful"
+        }
+      }
+    },
+    "auth_gate": {
+      "method": "GET",
+      "path": "/auth/gate",
+      "description": "Verify access token and get user info",
+      "headers": {
+        "Authorization": "Bearer sample-jwt-token-here"
+      },
+      "expected_response": {
+        "status_code": 200,
+        "body": {
+          "success": true,
+          "user_id": "sample-user-1",
+          "email": "user1@example.com"
+        }
+      }
+    },
+    "get_profile": {
+      "method": "GET",
+      "path": "/profile/{user_id}",
+      "description": "Get user profile information",
+      "path_params": {
+        "user_id": "sample-user-1"
+      },
+      "expected_response": {
+        "status_code": 200,
+        "body": {
+          "name": "John Doe",
+          "email": "user1@example.com"
+        }
+      }
+    },
+    "get_bots": {
+      "method": "GET",
+      "path": "/bots",
+      "description": "Get list of available bots",
+      "expected_response": {
+        "status_code": 200,
+        "body": {
+          "bots": [
+            {
+              "bot_name": "Aura",
+              "personality": "Friendly and helpful",
+              "description": "A compassionate AI assistant focused on emotional support and general queries."
+            },
+            {
+              "bot_name": "Blaze",
+              "personality": "Energetic and adventurous",
+              "description": "An enthusiastic AI that loves discussing technology, science, and creative projects."
+            },
+            {
+              "bot_name": "Zippy",
+              "personality": "Fun and playful",
+              "description": "A lighthearted AI that enjoys jokes, games, and casual conversation."
+            }
+          ]
+        }
+      }
+    },
+    "chat_with_bot": {
+      "method": "POST",
+      "path": "/chat/{user_id}/{bot_name}",
+      "description": "Send message to a specific bot",
+      "path_params": {
+        "user_id": "sample-user-1",
+        "bot_name": "Aura"
+      },
+      "request_body": "Hello, can you help me?",
+      "expected_response": {
+        "status_code": 200,
+        "body": {
+          "bot_response": "Hello! I'm happy to help. What can I do for you today?"
+        }
+      },
+      "notes": "This will also save the message to the database"
+    },
+    "get_messages": {
+      "method": "GET",
+      "path": "/messages/{user_id}/{bot_name}",
+      "description": "Get chat history with a specific bot",
+      "path_params": {
+        "user_id": "sample-user-1",
+        "bot_name": "Aura"
+      },
+      "expected_response": {
+        "status_code": 200,
+        "body": {
+          "user_id": "sample-user-1",
+          "bot_name": "Aura",
+          "chat": [
+            {
+              "user_id": "sample-user-1",
+              "sender": "sample-user-1",
+              "content": "Hello, how are you?",
+              "timestamp": "2023-10-01T10:05:00.000Z"
+            },
+            {
+              "user_id": "sample-user-1",
+              "sender": "Aura",
+              "content": "I'm doing well, thank you! How can I help you today?",
+              "timestamp": "2023-10-01T10:05:05.000Z"
+            }
+          ]
+        }
+      }
+    },
+    "delete_all_messages": {
+      "method": "DELETE",
+      "path": "/messages/{user_id}/all",
+      "description": "Delete all conversations for a user",
+      "path_params": {
+        "user_id": "sample-user-1"
+      },
+      "expected_response": {
+        "status_code": 200,
+        "body": {
+          "message": "All conversations deleted"
+        }
+      }
+    },
+    "delete_bot_messages": {
+      "method": "DELETE",
+      "path": "/messages/{user_id}/{bot_name}",
+      "description": "Delete conversation with a specific bot",
+      "path_params": {
+        "user_id": "sample-user-1",
+        "bot_name": "Aura"
+      },
+      "expected_response": {
+        "status_code": 200,
+        "body": {
+          "message": "Conversation with Aura deleted"
+        }
+      }
+    }
+  },
+  "test_scenarios": {
+    "user_flow": [
+      "auth_signup",
+      "auth_login",
+      "auth_gate",
+      "get_profile",
+      "get_bots",
+      "chat_with_bot",
+      "get_messages",
+      "delete_bot_messages",
+      "auth_logout"
+    ],
+    "bot_interaction": [
+      "auth_login",
+      "get_bots",
+      "chat_with_bot",
+      "get_messages"
+    ]
+  }
+}
