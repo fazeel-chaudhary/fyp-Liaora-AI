@@ -25,17 +25,18 @@ class GeminiService:
         # Initialize Supabase service
         self.supabase_service = SupabaseService()
 
-        # Register all available bots
-        self.available_bots = {
-            "Orion": OrionBot(),
-            "Aura": AuraBot(),
-            "Blaze": BlazeBot(),
-            "Echo": EchoBot(),
-            "Jovi": JoviBot(),
-            "Lumen": LumenBot(),
-            "Sera": SeraBot(),
-            "Zippy": ZippyBot(),
-        }
+        # Keys must match each bot's `name` (e.g. OrionBot) — same as `/bots` and Flutter URLs.
+        _instances = (
+            OrionBot(),
+            AuraBot(),
+            BlazeBot(),
+            EchoBot(),
+            JoviBot(),
+            LumenBot(),
+            SeraBot(),
+            ZippyBot(),
+        )
+        self.available_bots = {bot.name: bot for bot in _instances}
 
     #Return All Bots
     async def display_all_bots(self) -> BotList:
@@ -56,8 +57,19 @@ class GeminiService:
             return BotList(bots=[])
 
     # Chat with Bot
-    async def chat_with_bot(self, user_id: str, bot_name: str, user_message: str) -> Dict:
+    async def chat_with_bot(
+        self,
+        user_id: str,
+        bot_name: str,
+        user_message: str,
+        access_token: str,
+    ) -> Dict:
         try:
+            profile = await self.supabase_service.ensure_profile_row_for_access_token(
+                access_token, user_id
+            )
+            if not profile["success"]:
+                return {"success": False, "error": profile.get("error", "Profile sync failed")}
 
             bot_instance = self.available_bots[bot_name]
 
@@ -68,7 +80,12 @@ class GeminiService:
                 content=user_message,
                 timestamp=datetime.now(),
             )
-            await self.supabase_service.save_message(user_msg)
+            ok, err = await self.supabase_service.save_message(user_msg)
+            if not ok:
+                return {
+                    "success": False,
+                    "error": f"Could not save user message: {err}",
+                }
 
             # Fetch last 20 messages for context
             stored_chat = await self.supabase_service.get_messages(user_id, bot_name)
@@ -103,7 +120,13 @@ class GeminiService:
                 content=bot_response,
                 timestamp=datetime.now(),
             )
-            await self.supabase_service.save_message(bot_msg)
+            ok_bot, err_bot = await self.supabase_service.save_message(bot_msg)
+            if not ok_bot:
+                return {
+                    "success": False,
+                    "error": f"Could not save bot reply: {err_bot}",
+                    "bot_response": bot_response,
+                }
 
             return {
                 "success": True,

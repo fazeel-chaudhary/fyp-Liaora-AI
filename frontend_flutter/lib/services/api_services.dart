@@ -1,11 +1,17 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:frontend_flutter/core/api_config.dart';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  // Base API URL — localhost for web, emulator loopback for Android
-  static String get baseUrl =>
-      kIsWeb ? "http://localhost:8000" : "http://127.0.0.1:8000";
+  static String get baseUrl => ApiConfig.baseUrl;
+
+  static Map<String, dynamic>? _tryDecodeBody(String body) {
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is Map<String, dynamic>) return decoded;
+    } catch (_) {}
+    return null;
+  }
 
   /// Handles GET requests
   static Future<dynamic> getRequest(String endpoint, {String? token}) async {
@@ -21,7 +27,9 @@ class ApiService {
       return jsonDecode(response.body);
     } else {
       print("⚠️ [GET] ${response.statusCode}: ${response.body}");
-      return {"error": "GET failed with status ${response.statusCode}"};
+      final decoded = _tryDecodeBody(response.body);
+      if (decoded != null) return decoded;
+      return {"detail": "GET failed with status ${response.statusCode}"};
     }
   }
 
@@ -51,7 +59,9 @@ class ApiService {
       return jsonDecode(response.body);
     } else {
       print("⚠️ [POST] ${response.statusCode}: ${response.body}");
-      return {"error": "POST failed with status ${response.statusCode}"};
+      final decoded = _tryDecodeBody(response.body);
+      if (decoded != null) return decoded;
+      return {"detail": "POST failed with status ${response.statusCode}"};
     }
   }
 
@@ -69,7 +79,9 @@ class ApiService {
       return jsonDecode(response.body);
     } else {
       print("⚠️ [DELETE] ${response.statusCode}: ${response.body}");
-      return {"error": "DELETE failed with status ${response.statusCode}"};
+      final decoded = _tryDecodeBody(response.body);
+      if (decoded != null) return decoded;
+      return {"detail": "DELETE failed with status ${response.statusCode}"};
     }
   }
 }

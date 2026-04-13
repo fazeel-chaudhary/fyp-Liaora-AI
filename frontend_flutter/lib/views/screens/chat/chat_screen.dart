@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:frontend_flutter/providers/auth/auth_provider.dart';
 import 'package:frontend_flutter/providers/chat/chat_provider.dart';
 import 'package:frontend_flutter/models/message_model.dart';
 import 'package:frontend_flutter/views/reusables/message_bubble.dart';
 import 'package:provider/provider.dart';
+import 'package:frontend_flutter/utils/error_handler/snackbar.dart';
 import 'package:frontend_flutter/utils/media-query/size_config.dart';
 import 'package:frontend_flutter/views/reusables/icon_box.dart';
 
@@ -59,14 +61,21 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
 
     _controller.clear();
     final chatProvider = Provider.of<ChatProvider>(context, listen: false);
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final token = authProvider.token;
 
     // ✅ Avoid build-phase setState errors
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (token == null || token.isEmpty) {
+        SnackbarHelper.show(context, "Session expired — please sign in again.");
+        return;
+      }
       await chatProvider.sendMessage(
         context,
         widget.userId,
         widget.botName,
         text,
+        token,
       );
       _scrollToBottom();
     });

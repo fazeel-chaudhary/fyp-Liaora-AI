@@ -79,8 +79,16 @@ async def get_bots():
 
 
 @app.post("/chat/{user_id}/{bot_name}")
-async def chat_with_bot(user_id: str, bot_name: str, payload: Message):
-    result = await gemini_service.chat_with_bot(user_id, bot_name, payload.content)
+async def chat_with_bot(
+    user_id: str,
+    bot_name: str,
+    payload: Message,
+    authorization: str = Header(...),
+):
+    token = authorization.split(" ", 1)[1] if authorization.lower().startswith("bearer ") else authorization
+    result = await gemini_service.chat_with_bot(
+        user_id, bot_name, payload.content, access_token=token
+    )
     if result["success"]:
         return {"bot_response": result["bot_response"]}
     else:

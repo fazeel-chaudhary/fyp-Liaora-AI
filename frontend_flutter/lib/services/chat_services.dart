@@ -14,10 +14,12 @@ class ChatService {
     String userId,
     String botName,
     String message,
+    String token,
   ) async {
     return await ApiService.postRequest(
       "/chat/$userId/$botName",
       body: {"user_id": userId, "sender": "user", "content": message},
+      token: token,
     );
   }
 

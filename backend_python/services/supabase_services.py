@@ -60,13 +60,42 @@ class SupabaseService:
 
             if auth_response.user and auth_response.session:
                 access_token = auth_response.session.access_token
+                uid = str(auth_response.user.id)
+                # Auth users created outside this app (or before `public.users` existed) have no profile row;
+                # `messages.user_id` FK requires a row in `public.users`.
+                try:
+                    existing = await supabase.table("users").select("id").eq("id", uid).execute()
+                    if not existing.data:
+                        meta = getattr(auth_response.user, "user_metadata", None) or {}
+                        display_name = (
+                            meta.get("name")
+                            or meta.get("full_name")
+                            or login_data.email.split("@", 1)[0]
+                        )
+                        await supabase.table("users").insert(
+                            {
+                                "id": uid,
+                                "email": login_data.email,
+                                "name": str(display_name),
+                                "created_at": datetime.now().isoformat(),
+                            }
+                        ).execute()
+                except Exception as profile_err:
+                    print(f"ensure public.users row on login: {profile_err}")
+
                 return {
                     "success": True,
                     "user_id": auth_response.user.id,
-                    "access_token": access_token
+                    "access_token": access_token,
                 }
 
-            return {"success": False, "error": "Login failed"}
+            if auth_response.user and not auth_response.session:
+                return {
+                    "success": False,
+                    "error": "Email not verified — check your inbox or resend confirmation.",
+                }
+
+            return {"success": False, "error": "Invalid email or password"}
 
         except Exception as e:
             return {"success": False, "error": str(e)}
@@ -75,6 +104,44 @@ class SupabaseService:
         try:
             supabase = await self.get_server_client()
             await supabase.auth.sign_out()
+            return {"success": True}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    async def ensure_profile_row_for_access_token(
+        self, access_token: str, expected_user_id: str
+    ) -> dict:
+        """Upsert public.users using the caller's JWT so messages.user_id FK can succeed."""
+        try:
+            supabase = await self.get_server_client()
+            user_response = await supabase.auth.get_user(access_token)
+            user = user_response.user if user_response else None
+            if user is None:
+                return {"success": False, "error": "Invalid or expired session"}
+
+            uid = str(user.id)
+            if uid != str(expected_user_id):
+                return {"success": False, "error": "User id does not match access token"}
+
+            email = user.email or f"{uid[:8]}@session.local"
+            meta = getattr(user, "user_metadata", None) or {}
+            if not isinstance(meta, dict):
+                meta = {}
+            display_name = (
+                meta.get("name")
+                or meta.get("full_name")
+                or email.split("@", 1)[0]
+            )
+
+            await supabase.table("users").upsert(
+                {
+                    "id": uid,
+                    "email": email,
+                    "name": str(display_name),
+                    "created_at": datetime.now().isoformat(),
+                },
+                on_conflict="id",
+            ).execute()
             return {"success": True}
         except Exception as e:
             return {"success": False, "error": str(e)}
@@ -111,7 +178,7 @@ class SupabaseService:
             return None
 
     # ---------- Messages ----------
-    async def save_message(self, message_data: Message) -> bool:
+    async def save_message(self, message_data: Message) -> tuple[bool, str | None]:
         try:
             # Server-side write; no access token required here by design
             supabase = await self.get_server_client()
@@ -119,13 +186,14 @@ class SupabaseService:
                 "user_id": message_data.user_id,
                 "sender": message_data.sender,
                 "content": message_data.content,
-                "timestamp": message_data.timestamp.isoformat()
+                "timestamp": message_data.timestamp.isoformat(),
             }
             await supabase.table("messages").insert(message_dict).execute()
-            return True
+            return (True, None)
         except Exception as e:
-            print(f"Error saving message: {e}")
-            return False
+            err = str(e)
+            print(f"Error saving message: {err}")
+            return (False, err)
 
     async def get_messages(self, user_id: str, bot_name: str = None) -> StoredChat | List[StoredChat]:
         try:
