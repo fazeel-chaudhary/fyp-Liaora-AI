@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:frontend_flutter/core/api_config.dart';
 import 'package:http/http.dart' as http;
 
@@ -26,7 +27,7 @@ class ApiService {
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
-      print("⚠️ [GET] ${response.statusCode}: ${response.body}");
+      debugPrint("⚠️ [GET] ${response.statusCode}: ${response.body}");
       final decoded = _tryDecodeBody(response.body);
       if (decoded != null) return decoded;
       return {"detail": "GET failed with status ${response.statusCode}"};
@@ -46,8 +47,8 @@ class ApiService {
 
     final url = Uri.parse("$baseUrl$endpoint");
 
-    print("➡️ [POST] $url");
-    print("📦 Body: ${jsonEncode(body)}");
+    debugPrint("➡️ [POST] $url");
+    debugPrint("📦 Body: ${jsonEncode(body)}");
 
     final response = await http.post(
       url,
@@ -58,7 +59,7 @@ class ApiService {
     if (response.statusCode == 200 || response.statusCode == 201) {
       return jsonDecode(response.body);
     } else {
-      print("⚠️ [POST] ${response.statusCode}: ${response.body}");
+      debugPrint("⚠️ [POST] ${response.statusCode}: ${response.body}");
       final decoded = _tryDecodeBody(response.body);
       if (decoded != null) return decoded;
       return {"detail": "POST failed with status ${response.statusCode}"};
@@ -78,7 +79,7 @@ class ApiService {
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
-      print("⚠️ [DELETE] ${response.statusCode}: ${response.body}");
+      debugPrint("⚠️ [DELETE] ${response.statusCode}: ${response.body}");
       final decoded = _tryDecodeBody(response.body);
       if (decoded != null) return decoded;
       return {"detail": "DELETE failed with status ${response.statusCode}"};

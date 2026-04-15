@@ -1,14 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:frontend_flutter/providers/localization/localization_provider.dart';
 import 'package:frontend_flutter/providers/settings/settings_provider.dart';
+import 'package:frontend_flutter/utils/navigation/navigator.dart';
+import 'package:frontend_flutter/views/screens/features/ai_features_screen.dart';
 import 'package:provider/provider.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<SettingsProvider>().loadUserProfile(context);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final settingsProvider = Provider.of<SettingsProvider>(context);
+    final localizationProvider = Provider.of<LocalizationProvider>(context);
     final userInfo = settingsProvider.getUserInfo(context);
 
     return Scaffold(
@@ -19,7 +37,7 @@ class SettingsScreen extends StatelessWidget {
             end: Alignment.bottomCenter,
             colors: [
               theme.colorScheme.surface,
-              theme.colorScheme.surfaceVariant.withOpacity(0.3),
+              theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
             ],
           ),
         ),
@@ -37,18 +55,17 @@ class SettingsScreen extends StatelessWidget {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.surfaceVariant.withOpacity(
-                            0.3,
-                          ),
+                          color: theme.colorScheme.surfaceContainerHighest
+                              .withValues(alpha: 0.3),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: theme.colorScheme.outline.withOpacity(0.1),
+                            color: theme.colorScheme.outline.withValues(alpha: 0.1),
                             width: 1,
                           ),
                         ),
                         child: Icon(
                           Icons.arrow_back_ios_new_rounded,
-                          color: theme.colorScheme.onSurface.withOpacity(0.7),
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                           size: 18,
                         ),
                       ),
@@ -78,10 +95,28 @@ class SettingsScreen extends StatelessWidget {
                     _buildSettingsTile(
                       context,
                       icon: Icons.person_outline_rounded,
-                      title: userInfo["name"] ?? "User",
-                      subtitle: userInfo["email"] ?? "user@liora.ai",
+                      title: settingsProvider.isProfileLoading
+                          ? "Loading profile..."
+                          : (userInfo["name"] ?? "User"),
+                      subtitle: settingsProvider.profileError ??
+                          (userInfo["email"] ?? "user@liora.ai"),
                       onTap: () {
                         // TODO: Navigate to profile edit
+                      },
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    _buildSettingsTile(
+                      context,
+                      icon: Icons.auto_awesome_rounded,
+                      title: localizationProvider.t('features_lab'),
+                      subtitle:
+                          "Manage personality, memory, journal, files, branches and check-ins",
+                      onTap: () {
+                        Navigator.of(
+                          context,
+                        ).push(elegantRoute(const AIFeaturesScreen()));
                       },
                     ),
 
@@ -95,12 +130,41 @@ class SettingsScreen extends StatelessWidget {
                       subtitle: "Switch between light and dark theme",
                       trailing: Switch(
                         value: settingsProvider.isDarkMode,
-                        onChanged: (value) =>
-                            settingsProvider.toggleTheme(value),
-                        activeColor: theme.colorScheme.primary,
+                        onChanged: (value) {
+                          settingsProvider.toggleTheme(value);
+                        },
+                        activeThumbColor: theme.colorScheme.primary,
                         inactiveThumbColor: theme.colorScheme.onSurface
-                            .withOpacity(0.3),
-                        inactiveTrackColor: theme.colorScheme.surfaceVariant,
+                            .withValues(alpha: 0.3),
+                        inactiveTrackColor: theme.colorScheme.surfaceContainerHighest,
+                      ),
+                      onTap: null,
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    _buildSettingsTile(
+                      context,
+                      icon: Icons.language_rounded,
+                      title: "Language",
+                      subtitle:
+                          "Current: ${localizationProvider.languageCode.toUpperCase()}",
+                      trailing: DropdownButton<String>(
+                        value: localizationProvider.languageCode,
+                        underline: const SizedBox.shrink(),
+                        items: localizationProvider.supportedLanguages
+                            .map(
+                              (code) => DropdownMenuItem(
+                                value: code,
+                                child: Text(code.toUpperCase()),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (value) {
+                          if (value != null) {
+                            localizationProvider.setLanguage(value);
+                          }
+                        },
                       ),
                       onTap: null,
                     ),
@@ -172,12 +236,12 @@ class SettingsScreen extends StatelessWidget {
           color: theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: theme.colorScheme.outline.withOpacity(0.1),
+            color: theme.colorScheme.outline.withValues(alpha: 0.1),
             width: 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: theme.colorScheme.shadow.withOpacity(0.05),
+              color: theme.colorScheme.shadow.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
@@ -190,8 +254,8 @@ class SettingsScreen extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: (iconColor ?? theme.colorScheme.primary).withOpacity(
-                  0.1,
+                color: (iconColor ?? theme.colorScheme.primary).withValues(
+                  alpha: 0.1,
                 ),
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -221,7 +285,7 @@ class SettingsScreen extends StatelessWidget {
                     subtitle,
                     style: TextStyle(
                       fontSize: 14,
-                      color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                       letterSpacing: -0.1,
                     ),
                   ),
@@ -233,7 +297,7 @@ class SettingsScreen extends StatelessWidget {
             else if (onTap != null)
               Icon(
                 Icons.arrow_forward_ios_rounded,
-                color: theme.colorScheme.onSurface.withOpacity(0.3),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
                 size: 16,
               ),
           ],

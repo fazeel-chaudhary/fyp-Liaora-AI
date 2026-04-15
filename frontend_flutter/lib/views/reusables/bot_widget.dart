@@ -39,12 +39,12 @@ class BotWidget extends StatelessWidget {
                   color: theme.colorScheme.surface,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: theme.colorScheme.outline.withOpacity(0.1),
+                    color: theme.colorScheme.outline.withValues(alpha: 0.1),
                     width: 2,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: theme.colorScheme.shadow.withOpacity(0.05),
+                      color: theme.colorScheme.shadow.withValues(alpha: 0.05),
                       blurRadius: 20,
                       offset: const Offset(0, 8),
                     ),
@@ -63,7 +63,7 @@ class BotWidget extends StatelessWidget {
                             gradient: LinearGradient(
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
-                              colors: [color.withOpacity(0.8), color],
+                              colors: [color.withValues(alpha: 0.8), color],
                             ),
                           ),
                           child: Stack(
@@ -76,7 +76,7 @@ class BotWidget extends StatelessWidget {
                                       center: Alignment.topRight,
                                       radius: 1.5,
                                       colors: [
-                                        Colors.white.withOpacity(0.1),
+                                        Colors.white.withValues(alpha: 0.1),
                                         Colors.transparent,
                                       ],
                                     ),
@@ -88,6 +88,13 @@ class BotWidget extends StatelessWidget {
                                 child: Image.asset(
                                   imagePath,
                                   height: SizeConfig.height * 0.3,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Icon(
+                                      Icons.smart_toy_rounded,
+                                      size: SizeConfig.height * 0.08,
+                                      color: Colors.white.withValues(alpha: 0.9),
+                                    );
+                                  },
                                 ),
                               ),
                             ],
@@ -120,7 +127,7 @@ class BotWidget extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 13,
                                   color: theme.colorScheme.onSurface
-                                      .withOpacity(0.6),
+                                      .withValues(alpha: 0.6),
                                   letterSpacing: -0.2,
                                   height: 1.2,
                                 ),

@@ -2,8 +2,22 @@ from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from services.gemini_services import GeminiService
 from services.supabase_services import SupabaseService
-from models.models import Signup, Login, UserProfile, Message, StoredChat, BotList
-from typing import List
+from models.models import (
+    Signup,
+    Login,
+    UserProfile,
+    Message,
+    StoredChat,
+    BotList,
+    CustomBot,
+    CustomBotList,
+    JournalEntry,
+    JournalList,
+    DailyCheckIn,
+    MemoryFile,
+    MemoryFileList,
+)
+from typing import List, Dict, Optional
 
 # Initialize FastAPI app
 app = FastAPI(title="Liora AI")
@@ -95,6 +109,23 @@ async def chat_with_bot(
         raise HTTPException(status_code=400, detail=result.get("error", "Chat failed"))
 
 
+@app.post("/chat-live/{user_id}/{bot_name}")
+async def live_chat_with_bot(
+    user_id: str,
+    bot_name: str,
+    payload: Message,
+    authorization: str = Header(...),
+):
+    token = authorization.split(" ", 1)[1] if authorization.lower().startswith("bearer ") else authorization
+    result = await gemini_service.live_chat_with_bot(
+        user_id, bot_name, payload.content, access_token=token
+    )
+    if result["success"]:
+        return {"bot_response": result["bot_response"]}
+    else:
+        raise HTTPException(status_code=400, detail=result.get("error", "Live chat failed"))
+
+
 # Messages Routes
 @app.get("/messages/{user_id}/{bot_name}", response_model=StoredChat)
 async def get_messages(user_id: str, bot_name: str):
@@ -118,3 +149,85 @@ async def delete_bot_messages(user_id: str, bot_name: str):
         return {"message": f"Conversation with {bot_name} deleted"}
     else:
         raise HTTPException(status_code=400, detail="Failed to delete conversation")
+
+
+# Feature Routes
+@app.post("/custom-bots/{user_id}")
+async def upsert_custom_bot(user_id: str, payload: CustomBot):
+    if payload.user_id != user_id:
+        raise HTTPException(status_code=400, detail="Payload user_id mismatch")
+    ok, err = await supabase_service.upsert_custom_bot(payload)
+    if ok:
+        return {"message": "Custom bot saved"}
+    raise HTTPException(status_code=400, detail=err or "Failed to save custom bot")
+
+
+@app.get("/custom-bots/{user_id}", response_model=CustomBotList)
+async def get_custom_bots(user_id: str):
+    bots = await supabase_service.get_custom_bots(user_id)
+    return CustomBotList(bots=bots)
+
+
+@app.post("/journal/{user_id}")
+async def add_journal_entry(user_id: str, payload: JournalEntry):
+    if payload.user_id != user_id:
+        raise HTTPException(status_code=400, detail="Payload user_id mismatch")
+    ok, err = await supabase_service.add_journal_entry(payload)
+    if ok:
+        return {"message": "Journal entry saved"}
+    raise HTTPException(status_code=400, detail=err or "Failed to save journal entry")
+
+
+@app.get("/journal/{user_id}", response_model=JournalList)
+async def get_journal_entries(user_id: str):
+    entries = await supabase_service.get_journal_entries(user_id)
+    return JournalList(entries=entries)
+
+
+@app.post("/checkins/{user_id}")
+async def upsert_daily_checkin(user_id: str, payload: DailyCheckIn):
+    if payload.user_id != user_id:
+        raise HTTPException(status_code=400, detail="Payload user_id mismatch")
+    ok, err = await supabase_service.upsert_daily_checkin(payload)
+    if ok:
+        return {"message": "Check-in saved"}
+    raise HTTPException(status_code=400, detail=err or "Failed to save daily check-in")
+
+
+@app.get("/checkins/{user_id}", response_model=Optional[DailyCheckIn])
+async def get_latest_checkin(user_id: str):
+    return await supabase_service.get_latest_daily_checkin(user_id)
+
+
+@app.post("/memory-files/{user_id}")
+async def add_memory_file(user_id: str, payload: MemoryFile):
+    if payload.user_id != user_id:
+        raise HTTPException(status_code=400, detail="Payload user_id mismatch")
+    ok, err = await supabase_service.add_memory_file(payload)
+    if ok:
+        return {"message": "Memory file metadata saved"}
+    raise HTTPException(status_code=400, detail=err or "Failed to save memory file")
+
+
+@app.get("/memory-files/{user_id}", response_model=MemoryFileList)
+async def get_memory_files(user_id: str):
+    files = await supabase_service.get_memory_files(user_id)
+    return MemoryFileList(files=files)
+
+
+@app.get("/memory-dashboard/{user_id}")
+async def memory_dashboard(user_id: str) -> Dict[str, int]:
+    chats = await supabase_service.get_messages(user_id)
+    journal_entries = await supabase_service.get_journal_entries(user_id)
+    memory_files = await supabase_service.get_memory_files(user_id)
+
+    message_count = 0
+    if isinstance(chats, list):
+        for chat in chats:
+            message_count += len(chat.chat)
+
+    return {
+        "messages": message_count,
+        "journal_entries": len(journal_entries),
+        "uploaded_files": len(memory_files),
+    }

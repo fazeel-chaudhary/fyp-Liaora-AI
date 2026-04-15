@@ -40,12 +40,12 @@ class MessageBubble extends StatelessWidget {
                       height: 32,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [botColor, botColor.withOpacity(0.7)],
+                          colors: [botColor, botColor.withValues(alpha: 0.7)],
                         ),
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: botColor.withOpacity(0.3),
+                            color: botColor.withValues(alpha: 0.3),
                             blurRadius: 6,
                             offset: const Offset(0, 2),
                           ),
@@ -75,7 +75,7 @@ class MessageBubble extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: isUser
                     ? LinearGradient(
-                        colors: [botColor, botColor.withOpacity(0.85)],
+                        colors: [botColor, botColor.withValues(alpha: 0.85)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       )
@@ -90,8 +90,8 @@ class MessageBubble extends StatelessWidget {
                 boxShadow: [
                   BoxShadow(
                     color: isUser
-                        ? botColor.withOpacity(0.2)
-                        : Colors.black.withOpacity(0.06),
+                        ? botColor.withValues(alpha: 0.2)
+                        : Colors.black.withValues(alpha: 0.06),
                     blurRadius: 10,
                     offset: const Offset(0, 3),
                   ),
@@ -99,7 +99,7 @@ class MessageBubble extends StatelessWidget {
                 border: isUser
                     ? null
                     : Border.all(
-                        color: theme.colorScheme.onSurface.withOpacity(0.08),
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.08),
                         width: 1,
                       ),
               ),
@@ -133,14 +133,14 @@ class MessageBubble extends StatelessWidget {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            botColor.withOpacity(0.8),
-                            botColor.withOpacity(0.6),
+                            botColor.withValues(alpha: 0.8),
+                            botColor.withValues(alpha: 0.6),
                           ],
                         ),
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: botColor.withOpacity(0.2),
+                            color: botColor.withValues(alpha: 0.2),
                             blurRadius: 6,
                             offset: const Offset(0, 2),
                           ),

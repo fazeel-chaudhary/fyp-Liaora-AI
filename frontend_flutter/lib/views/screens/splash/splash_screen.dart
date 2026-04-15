@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:frontend_flutter/providers/auth/auth_provider.dart';
 import 'package:frontend_flutter/utils/media-query/size_config.dart';
 import 'package:frontend_flutter/utils/navigation/navigator.dart';
@@ -26,6 +27,14 @@ class _SplashScreenState extends State<SplashScreen> {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
     await Future.delayed(const Duration(seconds: 3));
+
+    // For web sessions, always require explicit sign-in instead of silent token restore.
+    if (kIsWeb) {
+      if (mounted) {
+        Navigator.of(context).pushReplacement(elegantRoute(const AuthScreen()));
+      }
+      return;
+    }
 
     // Check authentication
     final isAuthenticated = await authProvider.tryAutoLogin();

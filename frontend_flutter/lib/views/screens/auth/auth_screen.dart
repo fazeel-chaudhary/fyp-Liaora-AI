@@ -71,15 +71,15 @@ class _AuthScreenState extends State<AuthScreen>
 
     if (authProvider.isLogin) {
       await authProvider.login(email, password, context);
+      if (!mounted) return;
       if (authProvider.isLoggedIn) {
         SnackbarHelper.show(context, "Login successful!", isError: false);
 
         Navigator.of(context).pushReplacement(elegantRoute(const HomeScreen()));
-      } else {
-        SnackbarHelper.show(context, "Login failed. Please try again.");
       }
     } else {
       await authProvider.signup(email, password, username, context);
+      if (!mounted) return;
 
       SnackbarHelper.show(
         context,
@@ -143,7 +143,7 @@ class _AuthScreenState extends State<AuthScreen>
                                   style: TextStyle(
                                     fontSize: 16,
                                     color: theme.colorScheme.onSurface
-                                        .withOpacity(0.6),
+                                        .withValues(alpha: 0.6),
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
@@ -202,13 +202,13 @@ class _AuthScreenState extends State<AuthScreen>
                                         height: 56,
                                         decoration: BoxDecoration(
                                           color: theme.colorScheme.primary
-                                              .withOpacity(0.1),
+                                              .withValues(alpha: 0.1),
                                           borderRadius: BorderRadius.circular(
                                             16,
                                           ),
                                           border: Border.all(
                                             color: theme.colorScheme.primary
-                                                .withOpacity(0.2),
+                                                .withValues(alpha: 0.2),
                                           ),
                                         ),
                                         child: const Center(
@@ -227,13 +227,13 @@ class _AuthScreenState extends State<AuthScreen>
                                               colors: [
                                                 theme.colorScheme.primary,
                                                 theme.colorScheme.primary
-                                                    .withOpacity(0.8),
+                                                    .withValues(alpha: 0.8),
                                               ],
                                             ),
                                             border: Border.all(
                                               width: 1.0,
                                               color: theme.colorScheme.onSurface
-                                                  .withOpacity(0.4),
+                                                  .withValues(alpha: 0.4),
                                             ),
                                             borderRadius: BorderRadius.circular(
                                               20,
@@ -241,7 +241,7 @@ class _AuthScreenState extends State<AuthScreen>
                                             boxShadow: [
                                               BoxShadow(
                                                 color: theme.colorScheme.primary
-                                                    .withOpacity(0.3),
+                                                    .withValues(alpha: 0.3),
                                                 blurRadius: 12,
                                                 offset: const Offset(0, 4),
                                               ),
@@ -282,7 +282,7 @@ class _AuthScreenState extends State<AuthScreen>
                                           : "Already have an account? Sign in",
                                       style: TextStyle(
                                         color: theme.colorScheme.onSurface
-                                            .withOpacity(0.6),
+                                            .withValues(alpha: 0.6),
                                         fontSize: 15,
                                         letterSpacing: -0.2,
                                       ),

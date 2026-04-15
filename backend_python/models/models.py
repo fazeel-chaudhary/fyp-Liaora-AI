@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 # Signup
 class Signup(BaseModel):
@@ -40,3 +40,43 @@ class StoredChat(BaseModel):
     user_id: str
     bot_name: str
     chat: List[Message] = []
+
+
+class CustomBot(BaseModel):
+    user_id: str
+    bot_name: str
+    personality: str
+    description: str
+    avatar_emoji: Optional[str] = None
+    created_at: datetime = datetime.now()
+
+
+class CustomBotList(BaseModel):
+    bots: List[CustomBot] = []
+
+
+class JournalEntry(BaseModel):
+    user_id: str
+    content: str
+    timestamp: datetime = datetime.now()
+
+
+class JournalList(BaseModel):
+    entries: List[JournalEntry] = []
+
+
+class DailyCheckIn(BaseModel):
+    user_id: str
+    mood: str
+    check_in_date: str
+    updated_at: datetime = datetime.now()
+
+
+class MemoryFile(BaseModel):
+    user_id: str
+    file_name: str
+    uploaded_at: datetime = datetime.now()
+
+
+class MemoryFileList(BaseModel):
+    files: List[MemoryFile] = []

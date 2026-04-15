@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:frontend_flutter/providers/auth/auth_provider.dart';
 import 'package:frontend_flutter/providers/bot/bot_provider.dart';
 import 'package:frontend_flutter/providers/chat/chat_provider.dart';
+import 'package:frontend_flutter/providers/feature/feature_provider.dart';
+import 'package:frontend_flutter/providers/localization/localization_provider.dart';
 import 'package:frontend_flutter/providers/settings/settings_provider.dart';
 import 'package:frontend_flutter/utils/theme/themes.dart';
 import 'package:frontend_flutter/utils/media-query/size_config.dart';
@@ -23,7 +26,9 @@ class MainApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => BotProvider()),
         ChangeNotifierProvider(create: (_) => ChatProvider()),
-        ChangeNotifierProvider(create: (_) => SettingsProvider()),
+        ChangeNotifierProvider(create: (_) => SettingsProvider()..initialize()),
+        ChangeNotifierProvider(create: (_) => FeatureProvider()..initialize()),
+        ChangeNotifierProvider(create: (_) => LocalizationProvider()..loadLanguage()),
       ],
       child: Builder(
         builder: (context) {
@@ -31,10 +36,24 @@ class MainApp extends StatelessWidget {
           SizeConfig.init(context);
 
           final settingsProvider = Provider.of<SettingsProvider>(context);
+          final localizationProvider = Provider.of<LocalizationProvider>(
+            context,
+          );
 
           return MaterialApp(
             debugShowCheckedModeBanner: false,
             title: "Liora AI",
+            locale: localizationProvider.locale,
+            supportedLocales: const [
+              Locale('en'),
+              Locale('es'),
+              Locale('ms'),
+            ],
+            localizationsDelegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
             theme: lightMode,
             darkTheme: darkMode,
             themeMode: settingsProvider.isDarkMode

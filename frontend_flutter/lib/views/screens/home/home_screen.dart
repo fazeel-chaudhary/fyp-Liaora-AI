@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:frontend_flutter/providers/auth/auth_provider.dart';
 import 'package:frontend_flutter/providers/bot/bot_provider.dart';
+import 'package:frontend_flutter/providers/localization/localization_provider.dart';
 import 'package:frontend_flutter/utils/navigation/navigator.dart';
 import 'package:frontend_flutter/views/screens/chat/chat_screen.dart';
+import 'package:frontend_flutter/views/screens/features/ai_features_screen.dart';
+import 'package:frontend_flutter/views/screens/settings/settings.dart';
 import 'package:provider/provider.dart';
 import 'package:frontend_flutter/utils/media-query/size_config.dart';
 import 'package:frontend_flutter/views/reusables/app_icon.dart';
@@ -39,8 +42,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadBots() async {
     final botProvider = Provider.of<BotProvider>(context, listen: false);
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
     try {
-      await botProvider.fetchBots(context);
+      await botProvider.fetchBots(context, userId: authProvider.userId);
     } catch (_) {
       if (mounted) {
         SnackbarHelper.show(context, "Failed to load bots");
@@ -53,6 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final theme = Theme.of(context);
     final botProvider = Provider.of<BotProvider>(context);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final localizationProvider = Provider.of<LocalizationProvider>(context);
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -69,7 +74,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        "Liora",
+                        localizationProvider.t('app_name'),
                         style: TextStyle(
                           fontSize: SizeConfig.height * 0.02,
                           fontWeight: FontWeight.w600,
@@ -77,11 +82,26 @@ class _HomeScreenState extends State<HomeScreen> {
                           letterSpacing: 1.2,
                         ),
                       ),
-                      IconBox(
-                        icon: Icons.tune_rounded,
-                        onTap: () {
-                          SnackbarHelper.show(context, "Settings coming soon!");
-                        },
+                      Row(
+                        children: [
+                          IconBox(
+                            icon: Icons.auto_awesome_rounded,
+                            onTap: () {
+                              Navigator.of(
+                                context,
+                              ).push(elegantRoute(const AIFeaturesScreen()));
+                            },
+                          ),
+                          const SizedBox(width: 8),
+                          IconBox(
+                            icon: Icons.tune_rounded,
+                            onTap: () {
+                              Navigator.of(
+                                context,
+                              ).push(elegantRoute(const SettingsScreen()));
+                            },
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -97,7 +117,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       const AppIcon(),
                       SizedBox(height: SizeConfig.height * 0.02),
                       Text(
-                        "Choose Your\nAI Companion",
+                        localizationProvider.t('choose_companion'),
                         style: TextStyle(
                           fontSize: SizeConfig.height * 0.02,
                           fontWeight: FontWeight.w700,
@@ -111,7 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         "Each companion brings a unique personality\nand perspective to guide your journey",
                         style: TextStyle(
                           fontSize: SizeConfig.height * 0.016,
-                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -133,7 +153,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Text(
                       "No bots found",
                       style: TextStyle(
-                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                         fontSize: SizeConfig.height * 0.018,
                       ),
                     ),

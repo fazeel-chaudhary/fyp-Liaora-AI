@@ -12,6 +12,7 @@ class AuthProvider with ChangeNotifier {
   bool _isLogin = true;
   bool _isLoading = false;
   bool _obscurePassword = true;
+  String? _lastError;
 
   String? get token => _token;
   String? get userId => _userId;
@@ -20,6 +21,7 @@ class AuthProvider with ChangeNotifier {
   bool get isLogin => _isLogin;
   bool get isLoading => _isLoading;
   bool get obscurePassword => _obscurePassword;
+  String? get lastError => _lastError;
 
   void toggleAuthMode() {
     _isLogin = !_isLogin;
@@ -65,6 +67,7 @@ class AuthProvider with ChangeNotifier {
     BuildContext context,
   ) async {
     _setLoading(true);
+    _lastError = null;
     try {
       final res = await AuthService.login(email, password);
 
@@ -81,8 +84,9 @@ class AuthProvider with ChangeNotifier {
         throw Exception(res["detail"] ?? "Login failed");
       }
     } catch (e) {
+      _lastError = e.toString().replaceFirst('Exception: ', '').trim();
       if (context.mounted) {
-        SnackbarHelper.show(context, "Login failed: $e");
+        SnackbarHelper.show(context, "Login failed: ${_lastError ?? e}");
       }
     } finally {
       _setLoading(false);
@@ -95,8 +99,22 @@ class AuthProvider with ChangeNotifier {
     if (_token == null) return false;
 
     try {
-      await AuthService.authGate(_token!);
-      return true;
+      final gate = await AuthService.authGate(_token!);
+      final gateSuccess = gate["success"] == true;
+      final gateUserId = gate["user_id"]?.toString();
+      final storedUserId = _userId?.toString();
+
+      if (gateSuccess &&
+          gateUserId != null &&
+          storedUserId != null &&
+          gateUserId == storedUserId) {
+        return true;
+      }
+
+      _token = null;
+      _userId = null;
+      await _storage.deleteAll();
+      return false;
     } catch (_) {
       _token = null;
       _userId = null;

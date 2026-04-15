@@ -23,6 +23,20 @@ class ChatService {
     );
   }
 
+  /// Sends a voice-call style message without DB persistence
+  static Future<Map<String, dynamic>> sendLiveMessage(
+    String userId,
+    String botName,
+    String message,
+    String token,
+  ) async {
+    return await ApiService.postRequest(
+      "/chat-live/$userId/$botName",
+      body: {"user_id": userId, "sender": "user", "content": message},
+      token: token,
+    );
+  }
+
   /// Deletes all messages from all bots for a user
   static Future<Map<String, dynamic>> deleteAllMessages(String userId) async {
     return await ApiService.deleteRequest("/messages/$userId/all");
